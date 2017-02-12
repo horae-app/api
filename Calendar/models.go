@@ -14,6 +14,7 @@ type CalendarBasic struct {
 	End_at      time.Time
 	Description string
 	Value       float32
+	Status      string
 }
 
 type CalendarList struct {
@@ -41,8 +42,12 @@ func (self Calendar) Save() (Calendar, string) {
 		self.ID = gocql.TimeUUID()
 	}
 
-	db_cmd := "UPDATE calendar SET company_id = ?, contact_id = ?, start_at = ?, end_at = ?, description = ?, value = ? WHERE id = ?"
-	query := Cassandra.Session.Query(db_cmd, self.Company.ID, self.Contact.ID, self.Start_at, self.End_at, self.Description, self.Value, self.ID)
+	if self.Status == "" {
+		self.Status = "new";
+	}
+
+	db_cmd := "UPDATE calendar SET company_id = ?, contact_id = ?, start_at = ?, end_at = ?, description = ?, value = ?, status = ? WHERE id = ?"
+	query := Cassandra.Session.Query(db_cmd, self.Company.ID, self.Contact.ID, self.Start_at, self.End_at, self.Description, self.Value, self.Status, self.ID)
 	err := query.Exec()
 	if err != nil {
 		return self, err.Error()
@@ -93,7 +98,7 @@ func GetById(companyId string, id string) (Calendar, string) {
 func GetBy(companyId string, field string, value string) (Calendar, string) {
 	var calendar Calendar
 
-	db_cmd := "SELECT id, company_id, contact_id, start_at, end_at, description, value from calendar WHERE " + field + " = ?"
+	db_cmd := "SELECT id, company_id, contact_id, start_at, end_at, description, value, status from calendar WHERE " + field + " = ?"
 	query := Cassandra.Session.Query(db_cmd, value)
 	iterable := query.Iter()
 	m := map[string]interface{}{}
@@ -111,6 +116,7 @@ func GetBy(companyId string, field string, value string) (Calendar, string) {
 				End_at:      m["end_at"].(time.Time),
 				Description: m["description"].(string),
 				Value:       m["value"].(float32),
+				Status:      m["Status"].(string),
 			},
 			Company: cal_contact.Company,
 			Contact: cal_contact,
@@ -128,13 +134,13 @@ func GetAll(companyId string) []CalendarList {
 	var calendars []CalendarList
 	var id, contact_id gocql.UUID
 	var start_at, end_at time.Time
-	var description string
+	var description, status string
 	var value float32
 
-	db_cmd := "SELECT id, contact_id, start_at, end_at, description, value from calendar WHERE company_id = ?"
+	db_cmd := "SELECT id, contact_id, start_at, end_at, description, value, status from calendar WHERE company_id = ?"
 	query := Cassandra.Session.Query(db_cmd, companyId)
 	iterable := query.Iter()
-	for iterable.Scan(&id, &contact_id, &start_at, &end_at, &description, &value) {
+	for iterable.Scan(&id, &contact_id, &start_at, &end_at, &description, &value, &status) {
 		calendar := CalendarList{
 			CalendarBasic: CalendarBasic{
 				ID:          id,
@@ -142,6 +148,7 @@ func GetAll(companyId string) []CalendarList {
 				End_at:      end_at,
 				Description: description,
 				Value:       value,
+				Status:      status,
 			},
 			Contact_id: contact_id,
 		}
