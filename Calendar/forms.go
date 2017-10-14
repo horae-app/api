@@ -2,6 +2,8 @@ package Calendar
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
+	"log"
 	contact "github.com/horae-app/api/Contact"
 	"net/http"
 )
@@ -22,4 +24,23 @@ func CalendarForm(r *http.Request, company_id string, contact_id string) (Calend
 	calendar.Contact = cal_contact
 
 	return calendar, calendar.Validate()
+}
+
+
+func ChangeStatusForm(r *http.Request, newStatus string) string {
+	vars := mux.Vars(r)
+	companyId := vars["companyId"]
+	calendarId := vars["calendarId"]
+
+	calendar, errMsg := GetById(companyId, calendarId)
+	if errMsg != "" {
+		log.Println("[Calendar " + newStatus + "] Error:", errMsg)
+		return errMsg
+	}
+
+	calendar.Status = newStatus
+	calendar.Save()
+
+	log.Println("[Calendar " + newStatus + "] Success:", calendarId)
+	return ""
 }
