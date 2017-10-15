@@ -61,22 +61,39 @@ func (self Contact) Validate() string {
 	return ""
 }
 
-func GetByEmail(company company.Company, email string) (Contact, string) {
+func (self Contact) Delete() (bool, string) {
+	if self.IsNew() {
+		return false, "Contact not found"
+	}
+
+	db_cmd := "DELETE FROM contact WHERE id = ?"
+	query := Cassandra.Session.Query(db_cmd, self.ID)
+	err := query.Exec()
+	if err != nil {
+		return false, err.Error()
+	}
+
+	return true, ""
+}
+
+func GetBy(companyId string, field string, value string) (Contact, string) {
 	var contact Contact
 
-	db_cmd := "SELECT company_id, id, name, email, phone from contact WHERE email = ?"
-	query := Cassandra.Session.Query(db_cmd, email)
+	db_cmd := "SELECT company_id, id, name, email, phone from contact WHERE " + field + " = ?"
+	query := Cassandra.Session.Query(db_cmd, value)
 	iterable := query.Iter()
 	m := map[string]interface{}{}
 	for iterable.MapScan(m) {
-		if m["company_id"].(gocql.UUID) != company.ID {
+		if m["company_id"].(gocql.UUID).String() != companyId {
 			continue
 		}
+
+		cont_company, _ := company.GetById(companyId)
 
 		contact = Contact{
 			ID:      m["id"].(gocql.UUID),
 			Name:    m["name"].(string),
-			Company: company,
+			Company: cont_company,
 			Email:   m["email"].(string),
 			Phone:   m["phone"].(string),
 		}
@@ -89,8 +106,20 @@ func GetByEmail(company company.Company, email string) (Contact, string) {
 	return contact, ""
 }
 
+func GetByEmail(company company.Company, email string) (Contact, string) {
+	return GetBy(company.ID.String(), "email", email)
+}
+
+func GetById(companyId string, contactId string) (Contact, string) {
+	return GetBy(companyId, "id", contactId)
+}
+
 type NewContactResponse struct {
 	ID gocql.UUID
+}
+
+type SuccessResponse struct {
+	Message string
 }
 
 type ErrorResponse struct {

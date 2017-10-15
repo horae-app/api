@@ -9,9 +9,6 @@ import (
 func ContactForm(r *http.Request, company_id string) (Contact, string) {
 	var contact Contact
 
-	if r.Body == nil {
-		return contact, "Please send a request body"
-	}
 	err := json.NewDecoder(r.Body).Decode(&contact)
 	if err != nil {
 		return contact, err.Error()

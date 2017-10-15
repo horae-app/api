@@ -26,3 +26,26 @@ func Post(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
 	}
 }
+
+func Delete(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	companyId := vars["companyId"]
+	contactId := vars["contactId"]
+
+	contact, errMsg := GetById(companyId, contactId)
+	error_code := http.StatusNotFound
+	if errMsg == "" {
+		error_code = http.StatusBadRequest
+		_, errMsg = contact.Delete()
+	}
+
+	if errMsg == "" {
+		log.Println("[Delete Contact] Success:", contact.ID)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(SuccessResponse{Message: "Contact removed"})
+	} else {
+		log.Println("[Delete Contact] Error:", errMsg)
+		w.WriteHeader(error_code)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
+	}
+}
