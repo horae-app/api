@@ -100,3 +100,29 @@ func Notify(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(SuccessResponse{Message: "Notification sent"})
 }
+
+
+func Confirm(w http.ResponseWriter, r *http.Request) {
+	errMsg := ChangeStatusForm(r, "confirmed")
+	if errMsg != "" {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(SuccessResponse{Message: "Calendar confirmed"})
+}
+
+
+func Cancel(w http.ResponseWriter, r *http.Request) {
+	errMsg := ChangeStatusForm(r, "canceled")
+	if errMsg != "" {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(SuccessResponse{Message: "Calendar canceled"})
+}

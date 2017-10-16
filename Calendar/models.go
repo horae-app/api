@@ -116,7 +116,7 @@ func GetBy(companyId string, field string, value string) (Calendar, string) {
 				End_at:      m["end_at"].(time.Time),
 				Description: m["description"].(string),
 				Value:       m["value"].(float32),
-				Status:      m["Status"].(string),
+				Status:      m["status"].(string),
 			},
 			Company: cal_contact.Company,
 			Contact: cal_contact,
