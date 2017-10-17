@@ -4,6 +4,10 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/horae-app/api/Cassandra"
 	company "github.com/horae-app/api/Company"
+	util "github.com/horae-app/api/Util"
+	"log"
+	"math/rand"
+	"time"
 )
 
 type Contact struct {
@@ -34,6 +38,8 @@ func (self Contact) Save() (Contact, string) {
 	if err != nil {
 		return self, err.Error()
 	}
+
+	self.Invite()
 
 	return self, ""
 }
@@ -74,6 +80,37 @@ func (self Contact) Delete() (bool, string) {
 	}
 
 	return true, ""
+}
+
+func (self Contact) Invite() {
+	var token int
+
+	db_cmd := "select token FROM contact WHERE id = ?"
+	query := Cassandra.Session.Query(db_cmd, self.ID)
+	iterable := query.Iter()
+	m := map[string]interface{}{}
+	for iterable.MapScan(m) {
+		token = m["token"].(int)
+	}
+
+	if token == 0 {
+		rand.Seed(time.Now().UTC().UnixNano())
+		token = rand.Intn(999999)
+	}
+
+	_, errMsg := util.Invite(self.Email, self.Name, token)
+	if errMsg != "" {
+		log.Println("[Error] Could not send invite to " + self.Email)
+	}
+
+	db_cmd = "UPDATE contact SET \"token\" = ? WHERE id = ?"
+	query = Cassandra.Session.Query(db_cmd, token, self.ID)
+	err := query.Exec()
+	if err != nil {
+		log.Println("[Error] Could save token to " + self.ID.String())
+		log.Println("[Error] Reason " + err.Error())
+	}
+
 }
 
 func GetBy(companyId string, field string, value string) (Contact, string) {
