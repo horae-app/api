@@ -26,6 +26,7 @@ func main() {
 	router.HandleFunc("/company/auth", Middlewares(Company.Auth)).Methods("POST")
 	router.HandleFunc("/{companyId}/contact/new", Middlewares(Contact.Post)).Methods("POST")
 	router.HandleFunc("/{companyId}/contact/{contactId}", Middlewares(Contact.Delete)).Methods("DELETE")
+	router.HandleFunc("/{companyId}/contact/", Middlewares(Contact.List)).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

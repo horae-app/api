@@ -32,8 +32,8 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	companyId := vars["companyId"]
 	contactId := vars["contactId"]
 
-	contact, errMsg := GetById(companyId, contactId)
 	error_code := http.StatusNotFound
+	contact, errMsg := GetById(companyId, contactId)
 	if errMsg == "" {
 		error_code = http.StatusBadRequest
 		_, errMsg = contact.Delete()
@@ -48,4 +48,15 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(error_code)
 		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
 	}
+}
+
+func List(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	companyId := vars["companyId"]
+
+	contacts := GetAll(companyId)
+
+	log.Println("[List Contact] Success:", companyId)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ListResponse{Contacts: contacts})
 }

@@ -106,6 +106,28 @@ func GetBy(companyId string, field string, value string) (Contact, string) {
 	return contact, ""
 }
 
+func GetAll(companyId string) []Contact {
+	var contacts []Contact
+	cont_company, _ := company.GetById(companyId)
+
+	db_cmd := "SELECT id, name, email, phone from contact WHERE company_id = ?"
+	query := Cassandra.Session.Query(db_cmd, cont_company.ID)
+	iterable := query.Iter()
+	m := map[string]interface{}{}
+	for iterable.MapScan(m) {
+		contact := Contact{
+			ID:      m["id"].(gocql.UUID),
+			Name:    m["name"].(string),
+			Company: cont_company,
+			Email:   m["email"].(string),
+			Phone:   m["phone"].(string),
+		}
+		contacts = append(contacts, contact)
+	}
+
+	return contacts
+}
+
 func GetByEmail(company company.Company, email string) (Contact, string) {
 	return GetBy(company.ID.String(), "email", email)
 }
@@ -124,4 +146,8 @@ type SuccessResponse struct {
 
 type ErrorResponse struct {
 	Error string
+}
+
+type ListResponse struct {
+	Contacts []Contact
 }
