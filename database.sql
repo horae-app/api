@@ -7,4 +7,4 @@ CREATE TABLE contact (id uuid, company_id uuid, name text, email text, phone tex
 CREATE INDEX ON contact (email);
 CREATE INDEX ON contact (company_id);
 
-CREATE TABLE calendar (id uuid, company_id uuid, contact_id uuid, date timestamp, duration timestamp, description text, value decimal, PRIMARY KEY(id));
+CREATE TABLE calendar (id uuid, company_id uuid, contact_id uuid, start_at timestamp, end_at timestamp, description text, value float, PRIMARY KEY(id));

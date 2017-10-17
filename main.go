@@ -6,6 +6,7 @@ import (
 	"github.com/horae-app/api/Cassandra"
 	"github.com/horae-app/api/Company"
 	"github.com/horae-app/api/Contact"
+	"github.com/horae-app/api/Calendar"
 	"log"
 	"net/http"
 	"time"
@@ -27,6 +28,7 @@ func main() {
 	router.HandleFunc("/{companyId}/contact/new", Middlewares(Contact.Post)).Methods("POST")
 	router.HandleFunc("/{companyId}/contact/{contactId}", Middlewares(Contact.Delete)).Methods("DELETE")
 	router.HandleFunc("/{companyId}/contact/", Middlewares(Contact.List)).Methods("GET")
+	router.HandleFunc("/{companyId}/calendar/{contactId}/new", Middlewares(Calendar.Post)).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
