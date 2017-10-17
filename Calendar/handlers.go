@@ -50,3 +50,14 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
 	}
 }
+
+func List(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	companyId := vars["companyId"]
+
+	calendars := GetAll(companyId)
+
+	log.Println("[List Calendar] Success:", companyId)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ListResponse{Calendars: calendars})
+}

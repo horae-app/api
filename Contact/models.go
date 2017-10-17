@@ -8,7 +8,7 @@ import (
 
 type Contact struct {
 	ID      gocql.UUID
-	Company company.Company
+	Company company.CompanyBasic
 	Name    string
 	Email   string
 	Phone   string
@@ -128,7 +128,7 @@ func GetAll(companyId string) []Contact {
 	return contacts
 }
 
-func GetByEmail(company company.Company, email string) (Contact, string) {
+func GetByEmail(company company.CompanyBasic, email string) (Contact, string) {
 	return GetBy(company.ID.String(), "email", email)
 }
 

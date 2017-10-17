@@ -8,3 +8,4 @@ CREATE INDEX ON contact (email);
 CREATE INDEX ON contact (company_id);
 
 CREATE TABLE calendar (id uuid, company_id uuid, contact_id uuid, start_at timestamp, end_at timestamp, description text, value float, PRIMARY KEY(id));
+CREATE INDEX ON calendar (company_id);

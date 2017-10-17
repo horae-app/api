@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-func UserForm(r *http.Request) (Company, string) {
-	var company Company
+func UserForm(r *http.Request) (CompanyFull, string) {
+	var company CompanyFull
 
 	err := json.NewDecoder(r.Body).Decode(&company)
 	if err != nil {
@@ -18,7 +18,7 @@ func UserForm(r *http.Request) (Company, string) {
 
 func AuthForm(r *http.Request) (bool, string) {
 	var auth AuthRequest
-	var company Company
+	var company CompanyBasic
 
 	err := json.NewDecoder(r.Body).Decode(&auth)
 	if err != nil {
@@ -26,7 +26,12 @@ func AuthForm(r *http.Request) (bool, string) {
 	}
 
 	company, errMsg := GetByEmail(auth.Email)
-	if errMsg != "" || company.Password != auth.Password {
+	if errMsg != "" {
+		return false, "Incorrect username and/or password"
+	}
+
+	password, errMsg := GetPassword(auth.Email)
+	if errMsg != "" || password != auth.Password {
 		return false, "Incorrect username and/or password"
 	}
 

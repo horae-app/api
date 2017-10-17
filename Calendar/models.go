@@ -5,13 +5,12 @@ import (
 	"github.com/horae-app/api/Cassandra"
 	company "github.com/horae-app/api/Company"
 	contact "github.com/horae-app/api/Contact"
-	"log"
 	"time"
 )
 
 type Calendar struct {
 	ID          gocql.UUID
-	Company     company.Company
+	Company     company.CompanyBasic
 	Contact     contact.Contact
 	Start_at    time.Time
 	End_at      time.Time
@@ -34,7 +33,6 @@ func (self Calendar) Save() (Calendar, string) {
 	}
 
 	db_cmd := "UPDATE calendar SET company_id = ?, contact_id = ?, start_at = ?, end_at = ?, description = ?, value = ? WHERE id = ?"
-	log.Println(db_cmd, self.Company.ID, self.Contact.ID, self.Start_at, self.End_at, self.Description, self.Value, self.ID)
 	query := Cassandra.Session.Query(db_cmd, self.Company.ID, self.Contact.ID, self.Start_at, self.End_at, self.Description, self.Value, self.ID)
 	err := query.Exec()
 	if err != nil {
@@ -115,6 +113,30 @@ func GetBy(companyId string, field string, value string) (Calendar, string) {
 	return calendar, ""
 }
 
+func GetAll(companyId string) []Calendar {
+	var calendars []Calendar
+
+	db_cmd := "SELECT id, company_id, contact_id, start_at, end_at, description, value from calendar WHERE company_id = ?"
+	query := Cassandra.Session.Query(db_cmd, companyId)
+	iterable := query.Iter()
+	m := map[string]interface{}{}
+	for iterable.MapScan(m) {
+		cal_contact, _ := contact.GetById(m["company_id"].(gocql.UUID).String(), m["contact_id"].(gocql.UUID).String())
+		calendar := Calendar{
+			ID:          m["id"].(gocql.UUID),
+			Company:     cal_contact.Company,
+			Contact:     cal_contact,
+			Start_at:    m["start_at"].(time.Time),
+			End_at:      m["end_at"].(time.Time),
+			Description: m["description"].(string),
+			Value:       m["value"].(float32),
+		}
+		calendars = append(calendars, calendar)
+	}
+
+	return calendars
+}
+
 type NewCalendarResponse struct {
 	ID gocql.UUID
 }
@@ -125,4 +147,8 @@ type SuccessResponse struct {
 
 type ErrorResponse struct {
 	Error string
+}
+
+type ListResponse struct {
+	Calendars []Calendar
 }

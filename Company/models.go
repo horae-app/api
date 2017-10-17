@@ -5,20 +5,24 @@ import (
 	"github.com/horae-app/api/Cassandra"
 )
 
-type Company struct {
-	ID       gocql.UUID
-	Email    string
-	Name     string
-	Password string
-	City     string
-	State    string
+type CompanyBasic struct {
+	ID    gocql.UUID
+	Email string
+	Name  string
+	City  string
+	State string
 }
 
-func (self Company) IsNew() bool {
+type CompanyFull struct {
+	CompanyBasic
+	Password string
+}
+
+func (self CompanyBasic) IsNew() bool {
 	return self.ID.String() == "00000000-0000-0000-0000-000000000000"
 }
 
-func (self Company) Save() (Company, string) {
+func (self CompanyFull) Save() (CompanyFull, string) {
 	errMsg := self.Validate()
 	if errMsg != "" {
 		return self, errMsg
@@ -38,7 +42,7 @@ func (self Company) Save() (Company, string) {
 	return self, ""
 }
 
-func (self Company) Validate() string {
+func (self CompanyFull) Validate() string {
 	if self.Name == "" {
 		return "name is required"
 	}
@@ -61,29 +65,40 @@ func (self Company) Validate() string {
 	return ""
 }
 
-func GetByEmail(email string) (Company, string) {
+func GetByEmail(email string) (CompanyBasic, string) {
 	return GetBy("email", email)
 }
 
-func GetById(id string) (Company, string) {
+func GetById(id string) (CompanyBasic, string) {
 	return GetBy("id", id)
 }
 
-func GetBy(field string, value string) (Company, string) {
-	var company Company
+func GetPassword(email string) (string, string) {
+	db_cmd := "SELECT password from company WHERE email = ?"
+	query := Cassandra.Session.Query(db_cmd, email)
+	iterable := query.Iter()
+	m := map[string]interface{}{}
+	for iterable.MapScan(m) {
+		return m["password"].(string), ""
+	}
 
-	db_cmd := "SELECT id, name, password, city, state, email from company WHERE " + field + " = ?"
+	return "", "Not found"
+}
+
+func GetBy(field string, value string) (CompanyBasic, string) {
+	var company CompanyBasic
+
+	db_cmd := "SELECT id, name, city, state, email from company WHERE " + field + " = ?"
 	query := Cassandra.Session.Query(db_cmd, value)
 	iterable := query.Iter()
 	m := map[string]interface{}{}
 	for iterable.MapScan(m) {
-		company = Company{
-			ID:       m["id"].(gocql.UUID),
-			Name:     m["name"].(string),
-			Password: m["password"].(string),
-			City:     m["city"].(string),
-			State:    m["state"].(string),
-			Email:    m["email"].(string),
+		company = CompanyBasic{
+			ID:    m["id"].(gocql.UUID),
+			Name:  m["name"].(string),
+			City:  m["city"].(string),
+			State: m["state"].(string),
+			Email: m["email"].(string),
 		}
 	}
 
