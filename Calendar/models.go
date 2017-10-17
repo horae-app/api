@@ -5,8 +5,8 @@ import (
 	"github.com/horae-app/api/Cassandra"
 	company "github.com/horae-app/api/Company"
 	contact "github.com/horae-app/api/Contact"
-	"time"
 	"log"
+	"time"
 )
 
 type Calendar struct {
@@ -64,11 +64,26 @@ func (self Calendar) Validate() string {
 	return ""
 }
 
-func GetById(id string) (Calendar, string) {
-	return GetBy("id", id)
+func (self Calendar) Delete() (bool, string) {
+	if self.IsNew() {
+		return false, "Calendar not found"
+	}
+
+	db_cmd := "DELETE FROM calendar WHERE id = ?"
+	query := Cassandra.Session.Query(db_cmd, self.ID)
+	err := query.Exec()
+	if err != nil {
+		return false, err.Error()
+	}
+
+	return true, ""
 }
 
-func GetBy(field string, value string) (Calendar, string) {
+func GetById(companyId string, id string) (Calendar, string) {
+	return GetBy(companyId, "id", id)
+}
+
+func GetBy(companyId string, field string, value string) (Calendar, string) {
 	var calendar Calendar
 
 	db_cmd := "SELECT id, company_id, contact_id, start_at, end_at, description, value from calendar WHERE " + field + " = ?"
@@ -76,7 +91,11 @@ func GetBy(field string, value string) (Calendar, string) {
 	iterable := query.Iter()
 	m := map[string]interface{}{}
 	for iterable.MapScan(m) {
-		cal_contact, _ := contact.GetById(m["company_id"].(string), m["contact_id"].(string))
+		if m["company_id"].(gocql.UUID).String() != companyId {
+			continue
+		}
+
+		cal_contact, _ := contact.GetById(m["company_id"].(gocql.UUID).String(), m["contact_id"].(gocql.UUID).String())
 
 		calendar = Calendar{
 			ID:          m["id"].(gocql.UUID),
@@ -98,6 +117,10 @@ func GetBy(field string, value string) (Calendar, string) {
 
 type NewCalendarResponse struct {
 	ID gocql.UUID
+}
+
+type SuccessResponse struct {
+	Message string
 }
 
 type ErrorResponse struct {

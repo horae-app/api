@@ -27,3 +27,26 @@ func Post(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
 	}
 }
+
+func Delete(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	companyId := vars["companyId"]
+	calendarId := vars["calendarId"]
+
+	error_code := http.StatusNotFound
+	calendar, errMsg := GetById(companyId, calendarId)
+	if errMsg == "" {
+		error_code = http.StatusBadRequest
+		_, errMsg = calendar.Delete()
+	}
+
+	if errMsg == "" {
+		log.Println("[Delete Calendar] Success:", calendar.ID)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(SuccessResponse{Message: "Calendar removed"})
+	} else {
+		log.Println("[Delete Calendar] Error:", errMsg)
+		w.WriteHeader(error_code)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
+	}
+}
