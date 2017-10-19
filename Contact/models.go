@@ -82,17 +82,20 @@ func (self Contact) Delete() (bool, string) {
 	return true, ""
 }
 
-func (self Contact) Invite() {
-	var token int
-
-	db_cmd := "select token FROM contact WHERE id = ?"
-	query := Cassandra.Session.Query(db_cmd, self.ID)
+func (self Contact) GetToken() int {
+	db_cmd := "select token FROM contact WHERE email = ?"
+	query := Cassandra.Session.Query(db_cmd, self.Email)
 	iterable := query.Iter()
 	m := map[string]interface{}{}
 	for iterable.MapScan(m) {
-		token = m["token"].(int)
+		return m["token"].(int)
 	}
 
+	return 0
+}
+
+func (self Contact) Invite() {
+	token := self.GetToken()
 	if token == 0 {
 		rand.Seed(time.Now().UTC().UnixNano())
 		token = rand.Intn(999999)
@@ -103,8 +106,8 @@ func (self Contact) Invite() {
 		log.Println("[Error] Could not send invite to " + self.Email)
 	}
 
-	db_cmd = "UPDATE contact SET \"token\" = ? WHERE id = ?"
-	query = Cassandra.Session.Query(db_cmd, token, self.ID)
+	db_cmd := "UPDATE contact SET \"token\" = ? WHERE email = ?"
+	query := Cassandra.Session.Query(db_cmd, token, self.Email)
 	err := query.Exec()
 	if err != nil {
 		log.Println("[Error] Could save token to " + self.ID.String())
@@ -165,12 +168,61 @@ func GetAll(companyId string) []Contact {
 	return contacts
 }
 
+func CalendarList(contact_id gocql.UUID) []ContactCalendar {
+	var calendars []ContactCalendar
+	var id gocql.UUID
+	var start_at, end_at time.Time
+	var description string
+	var value float32
+
+	db_cmd := "SELECT id, start_at, end_at, description, value from calendar WHERE contact_id = ?"
+	iterable := Cassandra.Session.Query(db_cmd, contact_id).Iter()
+	for iterable.Scan(&id, &start_at, &end_at, &description, &value) {
+		calendar := ContactCalendar{
+			ID:          id,
+			StartAt:     start_at,
+			EndAt:       end_at,
+			Description: description,
+			Value:       value,
+		}
+		calendars = append(calendars, calendar)
+	}
+	return calendars
+}
+
+func GetAllByEmail(email string) []ContactCalendar {
+	var calendars []ContactCalendar
+	db_cmd := "SELECT id from contact WHERE email = ?"
+	query := Cassandra.Session.Query(db_cmd, email)
+	iterable := query.Iter()
+	m := map[string]interface{}{}
+	for iterable.MapScan(m) {
+		contact_calendars := CalendarList(m["id"].(gocql.UUID))
+		calendars = append(calendars, contact_calendars...)
+	}
+	return calendars
+}
+
 func GetByEmail(company company.CompanyBasic, email string) (Contact, string) {
 	return GetBy(company.ID.String(), "email", email)
 }
 
 func GetById(companyId string, contactId string) (Contact, string) {
 	return GetBy(companyId, "id", contactId)
+}
+
+func Auth(email string, token int) bool {
+	db_cmd := "SELECT token from contact WHERE email = ?"
+	query := Cassandra.Session.Query(db_cmd, email)
+	iterable := query.Iter()
+	m := map[string]interface{}{}
+	for iterable.MapScan(m) {
+		if m["token"].(int) == token {
+			return true
+		}
+	}
+
+	return false
 }
 
 type NewContactResponse struct {
@@ -187,4 +239,21 @@ type ErrorResponse struct {
 
 type ListResponse struct {
 	Contacts []Contact
+}
+
+type AuthRequest struct {
+	Email string
+	Token int
+}
+
+type ContactCalendar struct {
+	ID gocql.UUID
+	StartAt time.Time
+	EndAt time.Time
+	Description string
+	Value float32
+}
+
+type ListCalendarResponse struct {
+	Calendars []ContactCalendar
 }

@@ -29,11 +29,13 @@ func main() {
 
 	router.HandleFunc("/{companyId}/contact/new", Middlewares(Contact.Post)).Methods("POST")
 	router.HandleFunc("/{companyId}/contact/{contactId}", Middlewares(Contact.Delete)).Methods("DELETE")
-	router.HandleFunc("/{companyId}/contact/", Middlewares(Contact.List)).Methods("GET")
+	router.HandleFunc("/{companyId}/contact", Middlewares(Contact.List)).Methods("GET")
 
 	router.HandleFunc("/{companyId}/calendar/{contactId}/new", Middlewares(Calendar.Post)).Methods("POST")
 	router.HandleFunc("/{companyId}/calendar/{calendarId}", Middlewares(Calendar.Delete)).Methods("DELETE")
-	router.HandleFunc("/{companyId}/calendar/", Middlewares(Calendar.List)).Methods("GET")
+	router.HandleFunc("/{companyId}/calendar", Middlewares(Calendar.List)).Methods("GET")
+
+	router.HandleFunc("/calendar", Middlewares(Contact.Calendar)).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

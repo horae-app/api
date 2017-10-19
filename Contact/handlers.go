@@ -60,3 +60,19 @@ func List(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ListResponse{Contacts: contacts})
 }
+
+func Calendar(w http.ResponseWriter, r *http.Request) {
+	email, errMsg := CalendarForm(r)
+	if errMsg != "" {
+		log.Println("[Contact Calendar] Error:", errMsg)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
+		return
+	}
+
+	calendars := GetAllByEmail(email)
+
+	log.Println("[Contact Calendar] Success:", email)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ListCalendarResponse{Calendars: calendars})
+}
