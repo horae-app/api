@@ -24,11 +24,11 @@ func Post(w http.ResponseWriter, r *http.Request) {
 }
 
 func Auth(w http.ResponseWriter, r *http.Request) {
-	success, msg := AuthForm(r)
-	if success {
+	company, msg := AuthForm(r)
+	if msg == "" {
 		log.Println("[Auth] Success:", msg)
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(AuthResponse{Token: msg})
+		json.NewEncoder(w).Encode(AuthResponse{Token: company.ID.String(), City: company.City, State: company.State})
 	} else {
 		log.Println("[Auth] Error:", msg)
 		w.WriteHeader(http.StatusBadRequest)

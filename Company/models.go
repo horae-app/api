@@ -116,6 +116,8 @@ type AuthRequest struct {
 
 type AuthResponse struct {
 	Token string
+	City string
+	State string
 }
 
 type NewCompanyResponse struct {

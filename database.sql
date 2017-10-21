@@ -1,5 +1,7 @@
 CREATE KEYSPACE horaeapi WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};
 
+USE horaeapi;
+
 CREATE TABLE company (id uuid, email text, name text, password text, city text, state text, PRIMARY KEY(email));
 CREATE INDEX ON company (id);
 

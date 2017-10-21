@@ -16,24 +16,24 @@ func UserForm(r *http.Request) (CompanyFull, string) {
 	return company, company.Validate()
 }
 
-func AuthForm(r *http.Request) (bool, string) {
+func AuthForm(r *http.Request) (CompanyBasic, string) {
 	var auth AuthRequest
 	var company CompanyBasic
 
 	err := json.NewDecoder(r.Body).Decode(&auth)
 	if err != nil {
-		return false, err.Error()
+		return company, err.Error()
 	}
 
 	company, errMsg := GetByEmail(auth.Email)
 	if errMsg != "" {
-		return false, "Incorrect username and/or password"
+		return company, "Incorrect email and/or password"
 	}
 
 	password, errMsg := GetPassword(auth.Email)
 	if errMsg != "" || password != auth.Password {
-		return false, "Incorrect username and/or password"
+		return company, "Incorrect email and/or password"
 	}
 
-	return true, company.ID.String()
+	return company, ""
 }
