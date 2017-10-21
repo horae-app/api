@@ -28,7 +28,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 	if msg == "" {
 		log.Println("[Auth] Success:", msg)
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(AuthResponse{Token: company.ID.String(), City: company.City, State: company.State})
+		json.NewEncoder(w).Encode(AuthResponse{Token: company.ID.String(), Name: company.Name, City: company.City, State: company.State})
 	} else {
 		log.Println("[Auth] Error:", msg)
 		w.WriteHeader(http.StatusBadRequest)
