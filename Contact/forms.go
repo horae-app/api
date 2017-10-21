@@ -23,7 +23,6 @@ func ContactForm(r *http.Request, company_id string) (Contact, string) {
 	return contact, contact.Validate()
 }
 
-
 func CalendarForm(r *http.Request) (string, string) {
 	var auth AuthRequest
 	err := json.NewDecoder(r.Body).Decode(&auth)

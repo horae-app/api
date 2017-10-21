@@ -101,13 +101,10 @@ func (self Contact) Invite() {
 		token = rand.Intn(999999)
 	}
 
-	_, errMsg := util.Invite(self.Email, self.Name, token)
-	if errMsg != "" {
-		log.Println("[Error] Could not send invite to " + self.Email)
-	}
+	go util.Invite(self.Email, self.Name, token)
 
-	db_cmd := "UPDATE contact SET \"token\" = ? WHERE email = ?"
-	query := Cassandra.Session.Query(db_cmd, token, self.Email)
+	db_cmd := "UPDATE contact SET \"token\" = ? WHERE id = ?"
+	query := Cassandra.Session.Query(db_cmd, token, self.ID)
 	err := query.Exec()
 	if err != nil {
 		log.Println("[Error] Could save token to " + self.ID.String())
@@ -247,11 +244,11 @@ type AuthRequest struct {
 }
 
 type ContactCalendar struct {
-	ID gocql.UUID
-	StartAt time.Time
-	EndAt time.Time
+	ID          gocql.UUID
+	StartAt     time.Time
+	EndAt       time.Time
 	Description string
-	Value float32
+	Value       float32
 }
 
 type ListCalendarResponse struct {

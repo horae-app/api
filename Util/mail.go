@@ -2,6 +2,7 @@ package Util
 
 import (
 	"crypto/tls"
+	"log"
 	"strconv"
 
 	"gopkg.in/gomail.v2"
@@ -20,6 +21,7 @@ func Invite(email string, name string, token int) (bool, string) {
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 
 	if err := d.DialAndSend(m); err != nil {
+		log.Println("[Error] Could not send invite to " + email)
 		return false, err.Error()
 	}
 
