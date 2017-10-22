@@ -10,12 +10,16 @@ import (
 	"time"
 )
 
+type ContactBasic struct {
+	ID    gocql.UUID
+	Name  string
+	Email string
+	Phone string
+}
+
 type Contact struct {
-	ID      gocql.UUID
+	ContactBasic
 	Company company.CompanyBasic
-	Name    string
-	Email   string
-	Phone   string
 }
 
 func (self Contact) IsNew() bool {
@@ -128,11 +132,13 @@ func GetBy(companyId string, field string, value string) (Contact, string) {
 		cont_company, _ := company.GetById(companyId)
 
 		contact = Contact{
-			ID:      m["id"].(gocql.UUID),
-			Name:    m["name"].(string),
+			ContactBasic: ContactBasic{
+				ID:    m["id"].(gocql.UUID),
+				Name:  m["name"].(string),
+				Email: m["email"].(string),
+				Phone: m["phone"].(string),
+			},
 			Company: cont_company,
-			Email:   m["email"].(string),
-			Phone:   m["phone"].(string),
 		}
 	}
 
@@ -143,21 +149,21 @@ func GetBy(companyId string, field string, value string) (Contact, string) {
 	return contact, ""
 }
 
-func GetAll(companyId string) []Contact {
-	var contacts []Contact
+func GetAll(companyId string) []ContactBasic {
+	var contacts []ContactBasic
+	var id gocql.UUID
+	var name, email, phone string
 	cont_company, _ := company.GetById(companyId)
 
 	db_cmd := "SELECT id, name, email, phone from contact WHERE company_id = ?"
 	query := Cassandra.Session.Query(db_cmd, cont_company.ID)
 	iterable := query.Iter()
-	m := map[string]interface{}{}
-	for iterable.MapScan(m) {
-		contact := Contact{
-			ID:      m["id"].(gocql.UUID),
-			Name:    m["name"].(string),
-			Company: cont_company,
-			Email:   m["email"].(string),
-			Phone:   m["phone"].(string),
+	for iterable.Scan(&id, &name, &email, &phone) {
+		contact := ContactBasic{
+			ID:    id,
+			Name:  name,
+			Email: email,
+			Phone: phone,
 		}
 		contacts = append(contacts, contact)
 	}
@@ -235,7 +241,7 @@ type ErrorResponse struct {
 }
 
 type ListResponse struct {
-	Contacts []Contact
+	Contacts []ContactBasic
 }
 
 type AuthRequest struct {
