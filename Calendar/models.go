@@ -8,14 +8,23 @@ import (
 	"time"
 )
 
-type Calendar struct {
+type CalendarBasic struct {
 	ID          gocql.UUID
-	Company     company.CompanyBasic
-	Contact     contact.Contact
 	Start_at    time.Time
 	End_at      time.Time
 	Description string
 	Value       float32
+}
+
+type CalendarList struct {
+	CalendarBasic
+	Contact_id gocql.UUID
+}
+
+type Calendar struct {
+	CalendarBasic
+	Company company.CompanyBasic
+	Contact contact.Contact
 }
 
 func (self Calendar) IsNew() bool {
@@ -96,13 +105,15 @@ func GetBy(companyId string, field string, value string) (Calendar, string) {
 		cal_contact, _ := contact.GetById(m["company_id"].(gocql.UUID).String(), m["contact_id"].(gocql.UUID).String())
 
 		calendar = Calendar{
-			ID:          m["id"].(gocql.UUID),
-			Company:     cal_contact.Company,
-			Contact:     cal_contact,
-			Start_at:    m["start_at"].(time.Time),
-			End_at:      m["end_at"].(time.Time),
-			Description: m["description"].(string),
-			Value:       m["value"].(float32),
+			CalendarBasic: CalendarBasic{
+				ID:          m["id"].(gocql.UUID),
+				Start_at:    m["start_at"].(time.Time),
+				End_at:      m["end_at"].(time.Time),
+				Description: m["description"].(string),
+				Value:       m["value"].(float32),
+			},
+			Company: cal_contact.Company,
+			Contact: cal_contact,
 		}
 	}
 
@@ -113,23 +124,26 @@ func GetBy(companyId string, field string, value string) (Calendar, string) {
 	return calendar, ""
 }
 
-func GetAll(companyId string) []Calendar {
-	var calendars []Calendar
+func GetAll(companyId string) []CalendarList {
+	var calendars []CalendarList
+	var id, contact_id gocql.UUID
+	var start_at, end_at time.Time
+	var description string
+	var value float32
 
-	db_cmd := "SELECT id, company_id, contact_id, start_at, end_at, description, value from calendar WHERE company_id = ?"
+	db_cmd := "SELECT id, contact_id, start_at, end_at, description, value from calendar WHERE company_id = ?"
 	query := Cassandra.Session.Query(db_cmd, companyId)
 	iterable := query.Iter()
-	m := map[string]interface{}{}
-	for iterable.MapScan(m) {
-		cal_contact, _ := contact.GetById(m["company_id"].(gocql.UUID).String(), m["contact_id"].(gocql.UUID).String())
-		calendar := Calendar{
-			ID:          m["id"].(gocql.UUID),
-			Company:     cal_contact.Company,
-			Contact:     cal_contact,
-			Start_at:    m["start_at"].(time.Time),
-			End_at:      m["end_at"].(time.Time),
-			Description: m["description"].(string),
-			Value:       m["value"].(float32),
+	for iterable.Scan(&id, &contact_id, &start_at, &end_at, &description, &value) {
+		calendar := CalendarList{
+			CalendarBasic: CalendarBasic{
+				ID:          id,
+				Start_at:    start_at,
+				End_at:      end_at,
+				Description: description,
+				Value:       value,
+			},
+			Contact_id: contact_id,
 		}
 		calendars = append(calendars, calendar)
 	}
@@ -150,5 +164,5 @@ type ErrorResponse struct {
 }
 
 type ListResponse struct {
-	Calendars []Calendar
+	Calendars []CalendarList
 }
