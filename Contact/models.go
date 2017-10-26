@@ -214,18 +214,26 @@ func GetById(companyId string, contactId string) (Contact, string) {
 	return GetBy(companyId, "id", contactId)
 }
 
-func Auth(email string, token int) bool {
-	db_cmd := "SELECT token from contact WHERE email = ?"
+func Auth(email string, token int) (bool, ContactBasic) {
+	var id gocql.UUID
+	var name, contact_email, phone string
+	var contact_token int
+
+	db_cmd := "SELECT \"id\", \"name\", \"email\", \"phone\", \"token\" from contact WHERE email = ?"
 	query := Cassandra.Session.Query(db_cmd, email)
 	iterable := query.Iter()
-	m := map[string]interface{}{}
-	for iterable.MapScan(m) {
-		if m["token"].(int) == token {
-			return true
+	for iterable.Scan(&id, &name, &contact_email, &phone, &contact_token) {
+		if contact_token == token {
+			return true, ContactBasic{
+				ID:    id,
+				Name:  name,
+				Email: contact_email,
+				Phone: phone,
+			}
 		}
 	}
 
-	return false
+	return false, ContactBasic{}
 }
 
 type NewContactResponse struct {
@@ -242,6 +250,10 @@ type ErrorResponse struct {
 
 type ListResponse struct {
 	Contacts []ContactBasic
+}
+
+type AuthResponse struct {
+	Contact ContactBasic
 }
 
 type AuthRequest struct {

@@ -23,6 +23,21 @@ func ContactForm(r *http.Request, company_id string) (Contact, string) {
 	return contact, contact.Validate()
 }
 
+func ContactAuth(r *http.Request) (string, ContactBasic) {
+	var auth AuthRequest
+	err := json.NewDecoder(r.Body).Decode(&auth)
+	if err != nil {
+		return err.Error(), ContactBasic{}
+	}
+
+	success, contact := Auth(auth.Email, auth.Token)
+	if !success {
+		return "Incorrect username and/or password", ContactBasic{}
+	}
+
+	return "", contact
+}
+
 func CalendarForm(r *http.Request) (string, string) {
 	var auth AuthRequest
 	err := json.NewDecoder(r.Body).Decode(&auth)
@@ -30,7 +45,8 @@ func CalendarForm(r *http.Request) (string, string) {
 		return "", err.Error()
 	}
 
-	if Auth(auth.Email, auth.Token) {
+	success, _ := Auth(auth.Email, auth.Token)
+	if !success {
 		return auth.Email, "Incorrect username and/or password"
 	}
 
