@@ -173,20 +173,23 @@ func GetAll(companyId string) []ContactBasic {
 
 func CalendarList(contact_id gocql.UUID) []ContactCalendar {
 	var calendars []ContactCalendar
-	var id gocql.UUID
+	var id, company_id gocql.UUID
 	var start_at, end_at time.Time
 	var description string
 	var value float32
 
-	db_cmd := "SELECT id, start_at, end_at, description, value from calendar WHERE contact_id = ?"
+	db_cmd := "SELECT id, start_at, end_at, description, value, company_id from calendar WHERE contact_id = ?"
 	iterable := Cassandra.Session.Query(db_cmd, contact_id).Iter()
-	for iterable.Scan(&id, &start_at, &end_at, &description, &value) {
+	for iterable.Scan(&id, &start_at, &end_at, &description, &value, &company_id) {
+		company, _ := company.GetById(company_id.String())
+
 		calendar := ContactCalendar{
 			ID:          id,
 			StartAt:     start_at,
 			EndAt:       end_at,
 			Description: description,
 			Value:       value,
+			Company:     company,
 		}
 		calendars = append(calendars, calendar)
 	}
@@ -267,6 +270,7 @@ type ContactCalendar struct {
 	EndAt       time.Time
 	Description string
 	Value       float32
+	Company     company.CompanyBasic
 }
 
 type ListCalendarResponse struct {

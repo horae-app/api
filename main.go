@@ -36,7 +36,7 @@ func main() {
 	router.HandleFunc("/{companyId}/calendar", Middlewares(Calendar.List)).Methods("GET")
 
 	router.HandleFunc("/contact/auth", Middlewares(Contact.UserAuth)).Methods("POST")
-	router.HandleFunc("/calendar", Middlewares(Contact.Calendar)).Methods("POST")
+	router.HandleFunc("/contact/calendar", Middlewares(Contact.Calendar)).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
