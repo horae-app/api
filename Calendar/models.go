@@ -1,12 +1,13 @@
 package Calendar
 
 import (
+	"time"
 	"github.com/gocql/gocql"
 	"github.com/horae-app/api/Cassandra"
 	company "github.com/horae-app/api/Company"
 	contact "github.com/horae-app/api/Contact"
-	"time"
 )
+
 
 type CalendarBasic struct {
 	ID          gocql.UUID
@@ -151,6 +152,37 @@ func GetAll(companyId string) []CalendarList {
 				Status:      status,
 			},
 			Contact_id: contact_id,
+		}
+		calendars = append(calendars, calendar)
+	}
+
+	return calendars
+}
+
+func GetAllTomorrow(date time.Time) []Calendar {
+	var calendars []Calendar
+	var id, contact_id gocql.UUID
+	var start_at, end_at time.Time
+	var description, status string
+	var value float32
+
+	start_at = time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.Local)
+	start_at = start_at.Add(time.Duration(24)*time.Hour)
+	end_at = start_at.Add(time.Duration(86399)*time.Second)
+
+	db_cmd := "SELECT id, contact_id, start_at, end_at, description, value, status from calendar WHERE start_at > ? AND start_at <= ? ALLOW FILTERING"
+	query := Cassandra.Session.Query(db_cmd, start_at, end_at)
+	iterable := query.Iter()
+	for iterable.Scan(&id, &contact_id, &start_at, &end_at, &description, &value, &status) {
+		calendar := Calendar{
+			CalendarBasic: CalendarBasic{
+				ID:          id,
+				Start_at:    start_at,
+				End_at:      end_at,
+				Description: description,
+				Value:       value,
+				Status:      status,
+			},
 		}
 		calendars = append(calendars, calendar)
 	}
