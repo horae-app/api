@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/horae-app/api/Calendar"
 	"github.com/horae-app/api/Cassandra"
+	"github.com/horae-app/api/Cron"
 	"github.com/horae-app/api/Company"
 	"github.com/horae-app/api/Contact"
 	"github.com/horae-app/api/Device"
@@ -21,6 +22,8 @@ type healthcheckResponse struct {
 func main() {
 	CassandraSession := Cassandra.Session
 	defer CassandraSession.Close()
+
+	Cron.Start()
 
 	router := mux.NewRouter().StrictSlash(true)
 
