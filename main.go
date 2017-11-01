@@ -7,6 +7,7 @@ import (
 	"github.com/horae-app/api/Cassandra"
 	"github.com/horae-app/api/Company"
 	"github.com/horae-app/api/Contact"
+	"github.com/horae-app/api/Device"
 	"log"
 	"net/http"
 	"time"
@@ -37,6 +38,8 @@ func main() {
 
 	router.HandleFunc("/contact/auth", Middlewares(Contact.UserAuth)).Methods("POST")
 	router.HandleFunc("/contact/calendar", Middlewares(Contact.Calendar)).Methods("POST")
+
+	router.HandleFunc("/device/register", Middlewares(Device.Post)).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

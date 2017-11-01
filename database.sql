@@ -14,3 +14,5 @@ CREATE INDEX ON calendar (company_id);
 CREATE INDEX ON calendar (contact_id);
 
 ALTER TABLE contact ADD "token" int;
+
+CREATE TABLE device ("email" text, "token" text, "device" text, PRIMARY KEY("email"));
