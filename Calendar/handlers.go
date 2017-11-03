@@ -75,6 +75,7 @@ func Notify(w http.ResponseWriter, r *http.Request) {
 		log.Println("[Send Notification] Error:", errMsg)
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
+		return
 	}
 
 	token := device.GetTokenByEmail(calendar.Contact.Email)
@@ -83,6 +84,7 @@ func Notify(w http.ResponseWriter, r *http.Request) {
 		log.Println("[Send Notification] Error:", errMsg)
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
+		return
 	}
 
 	err := util.SentContactRemember(token, calendar.ID.String())
@@ -91,6 +93,7 @@ func Notify(w http.ResponseWriter, r *http.Request) {
 		log.Println("[Send Notification] Error:", errMsg)
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
+		return
 	}
 
 	log.Println("[Send Notification] Success:", calendarId)
