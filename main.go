@@ -34,6 +34,7 @@ func main() {
 
 	router.HandleFunc("/{companyId}/calendar/{contactId}/new", Middlewares(Calendar.Post)).Methods("POST")
 	router.HandleFunc("/{companyId}/calendar/{calendarId}", Middlewares(Calendar.Delete)).Methods("DELETE")
+	router.HandleFunc("/{companyId}/calendar/{calendarId}/notify", Middlewares(Calendar.Notify)).Methods("GET")
 	router.HandleFunc("/{companyId}/calendar", Middlewares(Calendar.List)).Methods("GET")
 
 	router.HandleFunc("/contact/auth", Middlewares(Contact.UserAuth)).Methods("POST")

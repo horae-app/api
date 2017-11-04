@@ -39,6 +39,19 @@ func (self Device) Validate() error {
 	return nil
 }
 
+func GetTokenByEmail(email string) string {
+	var token string
+
+	db_cmd := "SELECT \"token\" from device WHERE email = ?"
+	query := Cassandra.Session.Query(db_cmd, email)
+	iterable := query.Iter()
+	for iterable.Scan(&token) {
+		return token
+	}
+
+	return ""
+}
+
 type SuccessResponse struct {
 	Message string
 }

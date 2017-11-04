@@ -5,6 +5,9 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+
+	device "github.com/horae-app/api/Device"
+	util "github.com/horae-app/api/Util"
 )
 
 func Post(w http.ResponseWriter, r *http.Request) {
@@ -60,4 +63,37 @@ func List(w http.ResponseWriter, r *http.Request) {
 	log.Println("[List Calendar] Success:", companyId)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ListResponse{Calendars: calendars})
+}
+
+func Notify(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	companyId := vars["companyId"]
+	calendarId := vars["calendarId"]
+
+	calendar, errMsg := GetById(companyId, calendarId)
+	if errMsg != "" {
+		log.Println("[Send Notification] Error:", errMsg)
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
+	}
+
+	token := device.GetTokenByEmail(calendar.Contact.Email)
+	if token == "" {
+		errMsg = "User do not have token"
+		log.Println("[Send Notification] Error:", errMsg)
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
+	}
+
+	err := util.SentContactRemember(token, calendar.ID.String())
+	if err != nil {
+		errMsg = err.Error()
+		log.Println("[Send Notification] Error:", errMsg)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: errMsg})
+	}
+
+	log.Println("[Send Notification] Success:", calendarId)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(SuccessResponse{Message: "Notification sent"})
 }
